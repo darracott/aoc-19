@@ -8,9 +8,7 @@ def load_input(day):
     :param day: int:
     """
     path = os.path.join(
-        os.environ["HOME"],
-        "personal",
-        "aoc-19",
+        "./",
         f"day{day}",
         f"input_day{day}.txt"
     )
