@@ -1,7 +1,7 @@
-from day1.puzzle_day1 import load_input
+from common.functions import load_input
 
 
-def list_orbiters(orbitees):
+def list_orbiters(orbitees, orbiter_relations):
     orbiters = []
     for orbitee in orbitees:
         new_orbiters = orbiter_relations.get(orbitee)
@@ -10,17 +10,17 @@ def list_orbiters(orbitees):
     return orbiters
 
 
-def rec_list_orbiters():
+def rec_list_orbiters(orbiter_relations):
     orbits = [["COM"]]
     while True:
-        orbiters = list_orbiters(orbits[-1])
+        orbiters = list_orbiters(orbits[-1], orbiter_relations)
         if not orbiters:
             break
         orbits.append(orbiters)
     return orbits
 
 
-if __name__ == "__main__":
+def main():
     map_data = load_input(6)
     orbiter_relations = {}  # Dict[str, List[str]]
     get_orbitee = {}
@@ -33,21 +33,19 @@ if __name__ == "__main__":
         else:
             orbiter_relations[orbitee] = [orbiter]
 
-    orbits = rec_list_orbiters()
-    
+    orbits = rec_list_orbiters(orbiter_relations)
+
     count = 0
     for weight, orbit in enumerate(orbits):
         count += weight * len(orbit)
 
         if "YOU" in orbit:
             you_depth = weight
-            print(f"Orbit depth of 'YOU': {weight}")
+            # print(f"Orbit depth of 'YOU': {weight}")
         if "SAN" in orbit:
             san_depth = weight
-            print(f"Orbit depth of 'SAN': {weight}")
+            # print(f"Orbit depth of 'SAN': {weight}")
 
-    print(orbits[219])
-    
     if san_depth >= you_depth:
         start = "SAN"
         target = "YOU"
@@ -63,28 +61,20 @@ if __name__ == "__main__":
         new_start = get_orbitee[start]
         start = new_start
         depth -= 1
-    
+
     distance = abs(you_depth - san_depth)
-    print(distance)
     position1 = get_orbitee[start]
     position2 = get_orbitee[target]
-    print(position1)
-    print(position2)
 
     while position1 != position2:
         position1 = get_orbitee[position1]
         position2 = get_orbitee[position2]
         distance += 2
-    print(position1)
-    print(position2)
-    print(distance)
+
+    return count, distance
 
 
-# class DAG(object):
-#     """
-#     """
-#     def __init__(self, data):
-#         self.data = data
-#         # TODO read effective python on data structures for DAG 
-#         for line in data:
-#             print(line)
+if __name__ == "__main__":
+    count, distance = main()
+    print(f"Distance is: {distance}")
+    print(f"Count is: {count}")

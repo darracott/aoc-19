@@ -1,20 +1,7 @@
 #! /usr/bin/python3
-import os
 
 
-def load_input(day):
-    """
-    Loads the input file for the given day.
-    :param day: int:
-    """
-    path = os.path.join(
-        "./",
-        f"day{day}",
-        f"input_day{day}.txt"
-    )
-    with open(path) as _input:
-        data = _input.readlines()
-    return data
+from common.functions import load_input
 
 
 def module_fuel(weight):
