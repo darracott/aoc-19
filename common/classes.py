@@ -29,9 +29,9 @@ class IntCodeComputer(object):
         assert isinstance(_input, int)
         self.inputs.append(_input)
 
-    def retrieve_value(self, parameter, mode):
+    def read(self, parameter, mode):
         """
-        Get the value from
+        Get the usable value from parameter with mode.
         """
         if mode == 0:
             # Position mode.
@@ -44,6 +44,18 @@ class IntCodeComputer(object):
             return self.memory[self.relative_base + parameter]
         else:
             print(f"Unknown parameter mode: {mode}")
+
+    def write(self, value, param, mode):
+        """
+        Write value to address given my param and mode.
+        """
+        assert mode != 1
+        if mode == 0:
+            # Positiion mode.
+            self.memory[param] = value
+        elif mode == 2:
+            # Relative mode.
+            self.memory[self.relative_base + param] = value
 
     def step_forward(self):
         # Get the instruction value.
@@ -84,10 +96,18 @@ class IntCodeComputer(object):
         Writes this sum to address c.
         """
         # print(f"running 1 with {[mode_a, mode_b,mode_c]}")
-        a = self.memory[self.instruction_pointer + 1]
-        b = self.memory[self.instruction_pointer + 2]
-        c = self.memory[self.instruction_pointer + 3]
-        self.memory[c] = self.retrieve_value(a, mode_a) + self.retrieve_value(b, mode_b)
+        # Get params.
+        param_a = self.memory[self.instruction_pointer + 1]
+        param_b = self.memory[self.instruction_pointer + 2]
+        param_c = self.memory[self.instruction_pointer + 3]
+        # Read vales from params intended to be read.
+        value_a = self.read(param_a, mode_a)
+        value_b = self.read(param_b, mode_b)
+        # Compute content to be written.
+        content = value_a + value_b
+        # Write content to wherever param c & mode c indicate.
+        self.write(content, param_c, mode_c)
+        # Bump instruction pointer by 4 as we've used up 1 opcode and 3 params.
         self.instruction_pointer += 4
 
     def opcode2(self, mode_a=0, mode_b=0, mode_c=0):
@@ -96,10 +116,17 @@ class IntCodeComputer(object):
         Writes this sum to address c.
         """
         # print(f"running 2 with {[mode_a, mode_b,mode_c]}")
-        a = self.memory[self.instruction_pointer + 1]
-        b = self.memory[self.instruction_pointer + 2]
-        c = self.memory[self.instruction_pointer + 3]
-        self.memory[c] = self.retrieve_value(a, mode_a) * self.retrieve_value(b, mode_b)
+        # Get params
+        param_a = self.memory[self.instruction_pointer + 1]
+        param_b = self.memory[self.instruction_pointer + 2]
+        param_c = self.memory[self.instruction_pointer + 3]
+        # Read vales from params intended to be read.
+        value_a = self.read(param_a, mode_a)
+        value_b = self.read(param_b, mode_b)
+        # Compute content to be written.
+        content = value_a * value_b
+        # Write content to wherever param c & mode c indicate.
+        self.write(content, param_c, mode_c)
         self.instruction_pointer += 4
 
     def opcode3(self, mode_a=0):
@@ -123,8 +150,8 @@ class IntCodeComputer(object):
             print("ERROR: Opcode 3 only takes an integer as input.")
             raise(e)
 
-        a = self.memory[self.instruction_pointer + 1]
-        self.memory[a] = _input
+        param_a = self.memory[self.instruction_pointer + 1]
+        self.write(_input, param_a, mode_a)
         self.instruction_pointer += 2
 
     def opcode4(self, mode_a=0):
@@ -132,12 +159,12 @@ class IntCodeComputer(object):
         Outputs the value from address a.
         """
         # print(f"running 4 with {[mode_a]}")
-        a = self.memory[self.instruction_pointer + 1]
-        output = self.retrieve_value(a, mode_a)
-        self.outputs.append(output)
-        # print(f"Opcode4 output: {output}")
+        param_a = self.memory[self.instruction_pointer + 1]
+        value_a = self.read(param_a, mode_a)
+        self.outputs.append(value_a)
+        # print(f"Opcode4 output: {value_a}")
         self.instruction_pointer += 2
-        return output
+        return value_a
 
     def opcode5(self, mode_a=0, mode_b=0):
         """
@@ -146,57 +173,69 @@ class IntCodeComputer(object):
         Otherwise, do nothing.
         """
         # print(f"running 5 with {[mode_a, mode_b]}")
-        a = self.memory[self.instruction_pointer + 1]
-        if self.retrieve_value(a, mode_a):
-            b = self.memory[self.instruction_pointer + 2]
-            self.instruction_pointer = self.retrieve_value(b, mode_b)
+        param_a = self.memory[self.instruction_pointer + 1]
+        value_a = self.read(param_a, mode_a)
+        if value_a:
+            param_b = self.memory[self.instruction_pointer + 2]
+            value_b = self.read(param_b, mode_b)
+            self.instruction_pointer = value_b
         else:
             self.instruction_pointer += 3
 
     def opcode6(self, mode_a=0, mode_b=0):
         """
-        If the first parameter is zero, set the instruction pointer
-        to the value from the second parameter.
+        If the first parameter, a, is zero, set the instruction pointer
+        to the value from the second parameter, b.
         Otherwise, do nothing.
         """
         # print(f"running 6 with {[mode_a, mode_b]}")
-        a = self.memory[self.instruction_pointer + 1]
-        if self.retrieve_value(a, mode_a) == 0:
-            b = self.memory[self.instruction_pointer + 2]
-            self.instruction_pointer = self.retrieve_value(b, mode_b)
+        param_a = self.memory[self.instruction_pointer + 1]
+
+        value_a = self.read(param_a, mode_a)
+        if value_a == 0:
+            param_b = self.memory[self.instruction_pointer + 2]
+
+            value_b = self.read(param_b, mode_b)
+            self.instruction_pointer = value_b
         else:
             self.instruction_pointer += 3
 
     def opcode7(self, mode_a=0, mode_b=0, mode_c=0):
         """
-        If the first parameter is less than the second parameter,
-        store 1 in the position given by the third parameter.
+        If the first parameter, a, is less than the second parameter, b,
+        store 1 in the position given by the third parameter, c.
         Otherwise, store 0.
         """
         # print(f"running 7 with {[mode_a, mode_b, mode_c]}")
-        a = self.memory[self.instruction_pointer + 1]
-        b = self.memory[self.instruction_pointer + 2]
-        c = self.memory[self.instruction_pointer + 3]
-        if self.retrieve_value(a, mode_a) < self.retrieve_value(b, mode_b):
-            self.memory[c] = 1
+        param_a = self.memory[self.instruction_pointer + 1]
+        param_b = self.memory[self.instruction_pointer + 2]
+        param_c = self.memory[self.instruction_pointer + 3]
+        value_a = self.read(param_a, mode_a)
+        value_b = self.read(param_b, mode_b)
+        if value_a < value_b:
+            content = 1
         else:
-            self.memory[c] = 0
+            content = 0
+        self.write(content, param_c, mode_c)
         self.instruction_pointer += 4
 
     def opcode8(self, mode_a=0, mode_b=0, mode_c=0):
         """
-        If the first parameter is equal to the second parameter,
-        store 1 in the position given by the third parameter.
+        If the first parameter, a, is equal to the second parameter, b,
+        store 1 in the position given by the third parameter, c.
         Otherwise, store 0.
         """
         # print(f"running 8 with {[mode_a, mode_b, mode_c]}")
-        a = self.memory[self.instruction_pointer + 1]
-        b = self.memory[self.instruction_pointer + 2]
-        c = self.memory[self.instruction_pointer + 3]
-        if self.retrieve_value(a, mode_a) == self.retrieve_value(b, mode_b):
-            self.memory[c] = 1
+        param_a = self.memory[self.instruction_pointer + 1]
+        param_b = self.memory[self.instruction_pointer + 2]
+        param_c = self.memory[self.instruction_pointer + 3]
+        value_a = self.read(param_a, mode_a)
+        value_b = self.read(param_b, mode_b)
+        if value_a == value_b:
+            content = 1
         else:
-            self.memory[c] = 0
+            content = 0
+        self.write(content, param_c, mode_c)
         self.instruction_pointer += 4
 
     def opcode9(self, mode_a=0):
@@ -204,8 +243,9 @@ class IntCodeComputer(object):
         Update the relative base by adding a.
         """
         # print(f"running 9 with {[mode_a]}")
-        a = self.memory[self.instruction_pointer + 1]
-        self.relative_base += self.retrieve_value(a, mode_a)
+        param_a = self.memory[self.instruction_pointer + 1]
+        value_a = self.read(param_a, mode_a)
+        self.relative_base += value_a
         self.instruction_pointer += 2
 
     def opcode99(self):
