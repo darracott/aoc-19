@@ -1,8 +1,9 @@
 """Contains useful common classes for Advent of Code problems."""
 
 
-KNOWN_OPCODES = [1, 2, 3, 4, 5, 6, 7, 8, 99]
-KNOWN_MODES = [0, 1]
+KNOWN_OPCODES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 99]
+KNOWN_MODES = [0, 1, 2]
+ADDITIONAL_MEMORY = 10**2
 
 
 class IntCodeComputer(object):
@@ -10,8 +11,9 @@ class IntCodeComputer(object):
     Computes IntCode programs.
     """
     def __init__(self, intcode):
-        self.memory = list(intcode)
+        self.memory = list(intcode) + [0]*ADDITIONAL_MEMORY
         self.instruction_pointer = 0
+        self.relative_base = 0
         self.running = False
         self.waiting_for_input = False
         self.user_mode = False
@@ -37,6 +39,9 @@ class IntCodeComputer(object):
         elif mode == 1:
             # Immediate mode.
             return parameter
+        elif mode == 2:
+            # Relative mode.
+            return self.memory[self.relative_base + parameter]
         else:
             print(f"Unknown parameter mode: {mode}")
 
@@ -193,6 +198,15 @@ class IntCodeComputer(object):
         else:
             self.memory[c] = 0
         self.instruction_pointer += 4
+
+    def opcode9(self, mode_a=0):
+        """
+        Update the relative base by adding a.
+        """
+        # print(f"running 9 with {[mode_a]}")
+        a = self.memory[self.instruction_pointer + 1]
+        self.relative_base += self.retrieve_value(a, mode_a)
+        self.instruction_pointer += 2
 
     def opcode99(self):
         """
