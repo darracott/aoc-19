@@ -1,13 +1,8 @@
 from common.functions import load_input
 
+
 IMAGE_ROW_LEN = 25
 IMAGE_COLUMN_LEN  = 6
-
-
-def images(data, n):
-    """Yield successive n-sized chunks from data."""
-    for i in range(0, len(data), n):
-        yield data[i:i + n]
 
 
 def day8_part1():

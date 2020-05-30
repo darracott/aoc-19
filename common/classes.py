@@ -3,15 +3,14 @@
 
 KNOWN_OPCODES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 99]
 KNOWN_MODES = [0, 1, 2]
-ADDITIONAL_MEMORY = 10**2
 
 
 class IntCodeComputer(object):
     """
     Computes IntCode programs.
     """
-    def __init__(self, intcode):
-        self.memory = list(intcode) + [0]*ADDITIONAL_MEMORY
+    def __init__(self, intcode, additional_memory=0):
+        self.memory = list(intcode) + [0]*additional_memory
         self.instruction_pointer = 0
         self.relative_base = 0
         self.running = False
